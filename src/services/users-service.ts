@@ -80,3 +80,24 @@ export async function loginUserService(input: LoginUserInput) {
   return { token };
 }
 
+export async function getCurrentUserService(token: string) {
+  const result = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      created_at: users.createdAt,
+    })
+    .from(sessions)
+    .innerJoin(users, eq(sessions.userId, users.id))
+    .where(eq(sessions.token, token))
+    .limit(1);
+
+  if (result.length === 0) {
+    throw new Error("Unauthorized");
+  }
+
+  return result[0];
+}
+
+
