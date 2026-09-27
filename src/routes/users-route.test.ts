@@ -202,3 +202,80 @@ describe("GET /api/users/current", () => {
 });
 
 
+describe("DELETE /api/users/logout", () => {
+  it("should return data: OK on successful logout", async () => {
+    const mockLogout = mock(async () => ({ success: true }));
+    mock.module("../services/users-service", () => ({
+      registerUserService: mock(async () => ({ success: true })),
+      loginUserService: mock(async () => ({ token: "mock-token" })),
+      getCurrentUserService: mock(async () => ({
+        id: 1,
+        name: "rahman",
+        email: "rahman@localhost",
+        created_at: "timestamp",
+      })),
+      logoutUserService: mockLogout,
+    }));
+
+    const app = new Elysia().use(usersRoute);
+    const response = await app.handle(
+      new Request("http://localhost/api/users/logout", {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer valid-token",
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const json = await response.json();
+    expect(json).toEqual({ data: "OK" });
+  });
+
+  it("should return 401 Unauthorized if Authorization header is missing or malformed", async () => {
+    const app = new Elysia().use(usersRoute);
+    const response = await app.handle(
+      new Request("http://localhost/api/users/logout", {
+        method: "DELETE",
+      })
+    );
+
+    expect(response.status).toBe(401);
+    const json = await response.json();
+    expect(json).toEqual({ error: "Unauthorized" });
+  });
+
+  it("should return 401 Unauthorized if session is not found or invalid token", async () => {
+    const mockLogout = mock(async () => {
+      throw new Error("Unauthorized");
+    });
+    mock.module("../services/users-service", () => ({
+      registerUserService: mock(async () => ({ success: true })),
+      loginUserService: mock(async () => ({ token: "mock-token" })),
+      getCurrentUserService: mock(async () => ({
+        id: 1,
+        name: "rahman",
+        email: "rahman@localhost",
+        created_at: "timestamp",
+      })),
+      logoutUserService: mockLogout,
+    }));
+
+    const app = new Elysia().use(usersRoute);
+    const response = await app.handle(
+      new Request("http://localhost/api/users/logout", {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer invalid-token",
+        },
+      })
+    );
+
+    expect(response.status).toBe(401);
+    const json = await response.json();
+    expect(json).toEqual({ error: "Unauthorized" });
+  });
+});
+
+
+

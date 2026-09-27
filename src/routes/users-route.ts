@@ -3,6 +3,7 @@ import {
   registerUserService,
   loginUserService,
   getCurrentUserService,
+  logoutUserService,
 } from "../services/users-service";
 
 export const usersRoute = new Elysia({ prefix: "/api/users" })
@@ -69,6 +70,32 @@ export const usersRoute = new Elysia({ prefix: "/api/users" })
         return { error: "Unauthorized" };
       }
     }
+  )
+  .delete(
+    "/logout",
+    async ({ headers, set }) => {
+      const authorization = headers["authorization"];
+      if (!authorization || !authorization.startsWith("Bearer ")) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      const token = authorization.slice(7).trim();
+      if (!token) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+
+      try {
+        await logoutUserService(token);
+        set.status = 200;
+        return { data: "OK" };
+      } catch (error: any) {
+        set.status = 401;
+        return { error: "Unauthorized" };
+      }
+    }
   );
+
 
 
