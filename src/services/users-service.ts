@@ -112,6 +112,3 @@ export async function logoutUserService(token: string) {
 
   return { success: true };
 }
-
-
-
