@@ -100,4 +100,15 @@ export async function getCurrentUserService(token: string) {
   return result[0];
 }
 
+export async function logoutUserService(token: string) {
+  const deleted = await db
+    .delete(sessions)
+    .where(eq(sessions.token, token))
+    .returning({ id: sessions.id });
 
+  if (deleted.length === 0) {
+    throw new Error("Unauthorized");
+  }
+
+  return { success: true };
+}
